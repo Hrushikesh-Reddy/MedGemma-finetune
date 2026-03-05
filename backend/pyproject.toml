@@ -1,0 +1,17 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.135.0",
+    "ollama>=0.6.1",
+    "pydantic[email,timezone]>=2.12.5",
+    "websockets>=16.0",
+]
+
+[dependency-groups]
+dev = [
+    "locust>=2.43.3",
+]

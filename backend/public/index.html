@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FastAPI WebSocket Test</title>
+    </head>
+    <body>
+        <h1>WebSocket Test Client</h1>
+        <div id="messages"></div>
+        <input type="text" id="messageText" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="stopMessage()">Stop</button>
+        <script>
+            let session_id = "abcd-efgh-uuidv7"
+            var ws = new WebSocket(`ws://localhost:8000/ws/${session_id}`);
+            ws.onmessage = function(event) {
+                var messages = document.getElementById('messages');
+                // var message = document.createElement('div');
+                let data = JSON.parse(event.data)
+                messages.textContent += data.content;
+                // messages.appendChild(message);
+            };
+            function sendMessage() {
+                var input = document.getElementById('messageText');
+                let message = JSON.stringify({
+                    type:"start",
+                    Run : {
+                    user:"u1",
+                    input : {
+                        prompt:input.value,
+                        image:"path_to_img"
+                    }},
+                })
+                ws.send(message);
+                input.value = '';
+            }
+            function stopMessage() {
+                let message = JSON.stringify({
+                    type:"stop", 
+                    value : `stopped by user`,
+                })
+                ws.send(message);
+            }
+        </script>
+    </body>
+</html>
