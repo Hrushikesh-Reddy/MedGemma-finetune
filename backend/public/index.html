@@ -10,8 +10,8 @@
         <button onclick="sendMessage()">Send</button>
         <button onclick="stopMessage()">Stop</button>
         <script>
-            let session_id = "abcd-efgh-uuidv7"
-            var ws = new WebSocket(`ws://localhost:8000/ws/${session_id}`);
+            let session_id = "01957f9c-8c9c-7d2a-9b7e-6f3d1a2c4e5f"
+            var ws = new WebSocket(`ws://localhost:8000/runs/${session_id}`);
             ws.onmessage = function(event) {
                 var messages = document.getElementById('messages');
                 // var message = document.createElement('div');

@@ -1,15 +1,18 @@
 import asyncio
-from fastapi import WebSocket, WebSocketDisconnect
 from typing import Dict
 from .llm import generate
-
-
+from fastapi import WebSocket, WebSocketDisconnect
+from .datamodel.db import Message
+import uuid
+from loguru import logger
+from starlette.websockets import WebSocketState
+ 
 class WebSocketManager:
     
-    def __init__(self):
+    def __init__(self, db_manager):
         self._connections: Dict[str, WebSocket] = {}
-        self._tasks: {str, asyncio.Task} = {}
-        
+        self._tasks: Dict[str, asyncio.Task] = {}
+        self.db_manager = db_manager
 
     async def connect(self, session_id:str, websocket: WebSocket) -> bool:
         try :
@@ -17,38 +20,57 @@ class WebSocketManager:
             self._connections[session_id] = websocket
             return True
         except Exception as e:
-            print(f"Connection error for session {session_id} : {e}")
+            logger.error(f"Connection error for session {session_id} : {e}")
             return False
 
     async def disconnect(self, session_id:str) -> None:
-        
+        logger.info(f"Disconnecting session {session_id}")
         self._connections.pop(session_id, None)
         
         if session_id in self._tasks and not self._tasks[session_id].done() :
             await self.stop_stream(session_id)
-            
-        print(f"connection closed for session : {session_id}")
+        self._tasks.pop(session_id, None)
+        
+        logger.info(f"connection closed for session : {session_id}")
     
-
-    async def _send_message(self, session_id:str, message: dict) -> None:
+    async def _send_message(self, session_id:str, message: str) -> None:
         
         if session_id not in self._connections:
-            print("Attempted to send message to a closed connection for session {session_id}")
+            logger.info("Attempted to send message to a closed connection for session {session_id}")
             return
         
         try:    
             ws = self._connections[session_id]
-            await ws.send_json(message)
+            if ws.client_state == WebSocketState.CONNECTED :
+                await ws.send_json(message)
+            else : 
+                logger.warning(f"Websocket is not connected for session : {session_id}")
+                return
+            
         except WebSocketDisconnect:
-            print("Websocket disconnected while sending message for session {session_id}")
+            logger.error("Websocket disconnected while sending message for session {session_id}")
             await self.disconnect(session_id)
         except Exception as e:
-            print(f"Error sending message for session {session_id} {e} {message}")
+            logger.error(f"Error sending message for session {session_id} {e} {message}")
             await self.disconnect(session_id)
     
     async def _save_message(self, session_id:str, message:str):
-        pass
-        
+        try:
+            msg = self.get_run(session_id)
+            #print("run : ", run)
+            msg.response = message
+            logger.info(f"saving message : {msg}")
+            res = self.db_manager.upsert(msg)
+            logger.info(f"\n{res}\n")
+        except Exception as e:
+            logger.error(f"Error saving message : {e}")
+    
+    def get_run(self, session_id: str) -> Message:
+        try :
+            return self.db_manager.get(Message, 1, {"session_id": uuid.UUID(session_id)}).data[0]
+        except Exception as e:
+            logger.error(f"Error getting run : {e}")    
+                
     def add_task(self, session_id:str, task:asyncio.Task) -> None:
         self._tasks[session_id] = task
     
@@ -69,21 +91,21 @@ class WebSocketManager:
                 }
                 result.append(message["content"])
                 await self._send_message(session_id, message)
-                
             await self._save_message(session_id, "".join(result))
+            
         except asyncio.CancelledError:
-            print(f"run interrupted by user {e}")
+            logger.warning(f"run interrupted by user or server cleanup : {e}")
             await asyncio.shield(self._save_message(session_id, "".join(result)))
             raise # ?
         except Exception as e:
             await self._send_message(session_id, {"type" : "Error", "reason" : f"{e}"})
-            print(f"Error streaming for session {session_id}: {e}")
+            logger.error(f"Error streaming for session {session_id}: {e}")
         finally:
             self._tasks.pop(session_id, None)
     
     async def stop_stream(self, session_id) -> None:
         if session_id not in self._tasks:
-            print(f"Unable to stop stream, No active runs in session {session_id}")
+            logger.info(f"Unable to stop stream, No active runs in session {session_id}")
             return
         
         try:
@@ -95,10 +117,43 @@ class WebSocketManager:
             }
             await self._send_message(session_id, message)
         except Exception as e:
-            print(f"Error cancelling run for session : {session_id} -> {e}")
+            logger.error(f"Error cancelling run for session : {session_id} -> {e}")
         finally:
-            print(f"stopped run for session {session_id}")
+            logger.info(f"stopped run for session {session_id}")
             self._tasks.pop(session_id, None)
+            
+    async def cleanup(self):
+        logger.info(f"Cleaning up {len(self._connections)} active connections")
+        
+        try:
+            for session_id in self._connections.copy():
+                self._tasks[session_id].cancel()
+                message = {
+                "type":"stopped",
+                "reason" : "Server cleanup"
+                }
+                await self._send_message(session_id, message)
+            
+            async def disconnect_all():
+                for session_id in self._connections.copy():
+                    try:
+                        asyncio.wait_for(self.disconnect(session_id), timeout=2)
+                    except asyncio.TimeoutError:
+                        logger.error(f"Timeout while disconnecting session : {session_id}")
+                    except Exception as e:
+                        logger.error(f"Unable to disconnect session {session_id} : {e}")
+            
+            await asyncio.wait_for(disconnect_all(), timeout=10)
+            
+        except asyncio.TimeoutError:
+            logger.error(f"WebsocketManager cleanup timed out")
+        except Exception as e:
+            logger.error(f"Error while WebscoketManager cleanup : {e}")
+        finally:
+            self._connections.clear()
+            self._tasks.clear()
+                
+                
         
     
     

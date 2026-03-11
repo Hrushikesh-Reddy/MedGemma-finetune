@@ -1,17 +1,20 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
-from ..connection import WebSocketManager 
-from ..datamodel.types import Run 
+from ..datamodel.types import Run
+from ..connection import WebSocketManager
+from ..dependencies import get_websocket_manager, get_db
+from fastapi import Depends, APIRouter, WebSocket, WebSocketDisconnect
+from loguru import logger
 
 router = APIRouter()
-ws_manager = WebSocketManager()
 
-@router.websocket("/ws/{session_id}")
+@router.websocket("/runs/{session_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
-    session_id: str
+    session_id: str,
+    websocket_manager:WebSocketManager = Depends(get_websocket_manager),
+    db=Depends(get_db)
 ):
-    connected = await ws_manager.connect(session_id, websocket)
+    connected = await websocket_manager.connect(session_id, websocket)
     if not connected:
         await websocket.close(code=4002, reason="Failed to establish connection")
         return
@@ -21,21 +24,23 @@ async def websocket_endpoint(
             data = await websocket.receive_json()
             
             if data.get("type") == "start":
-                run = Run.model_validate(data.get("Run"))
-                task = asyncio.create_task(ws_manager.start_stream(
+                run = Run.model_validate(data.get("Run")).model_dump()
+                task = asyncio.create_task(websocket_manager.start_stream(
                     session_id,
-                    run.input,
+                    run.get("input"),
                 ))
-                ws_manager.add_task(session_id, task)
-                print("Started streaming response for prompt:", run.input.prompt)
+                websocket_manager.add_task(session_id, task)
+                logger.info(f"Started streaming response for prompt: {run.get("input").get("prompt")}")
                 
             elif data.get("type") == "stop":
-                await ws_manager.stop_stream(session_id)
+                await websocket_manager.stop_stream(session_id)
                 
     except WebSocketDisconnect:
-        await ws_manager.disconnect(websocket)
+        logger.info(f"Websocket disconnected for session {session_id}")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Websocket error: {e}")
+    finally:
+        await websocket_manager.disconnect(session_id)
         
         
         

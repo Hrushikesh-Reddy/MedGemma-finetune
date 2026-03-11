@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-import typing
+from typing import Optional, Any
+
 
 class Input(BaseModel):
     prompt:str
@@ -8,6 +9,11 @@ class Input(BaseModel):
 class Run(BaseModel):
     user:str
     input:Input
+    
+class Response(BaseModel):
+    message: str
+    status: bool
+    data: Optional[Any] = None
 
 
     

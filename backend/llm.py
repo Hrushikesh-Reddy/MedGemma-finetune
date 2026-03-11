@@ -5,7 +5,7 @@ client = AsyncClient()
 async def generate(input):
     messages = [{
         "role": "user", 
-        "content": f"{input.prompt}",               
+        "content": f"{input.get("prompt")}",               
     }]
     
     """ if input.image:
