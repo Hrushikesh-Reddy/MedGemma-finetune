@@ -4,24 +4,34 @@ import Message from "../Message";
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 
+interface Message {
+    response: string;
+    input: {
+        prompt: string;
+        image: string;
+    };
+    done: boolean | null;
+}
+
 export default function Home() {
 
     const params = useParams()
     const session_id = params.session
     const user = "u1"
-    const [messages, setMessages] = useState([])
+    const [messages, setMessages] = useState<Array<Message>>([])
     const [loading, setLoading] = useState(false)
-    const wsRef = useRef(null)
-    const bottomRef = useRef(null)
+    const wsRef = useRef<WebSocket | null>(null)
+    const bottomRef = useRef<HTMLDivElement | null>(null)
 
     console.log(params)
 
     useEffect(() => {
         const getMessages = async () => {
             let res = await fetch(`http://localhost:8000/sessions/${session_id}/messages`)
-            res = await res.json()
-            console.log(res.data)
-            setMessages(res.data.reverse())
+            let data = await res.json()
+            data = data.data
+            console.log(data)
+            setMessages(data.reverse())
         }
         getMessages()
     }, [session_id])
@@ -102,14 +112,14 @@ export default function Home() {
                 }
             },
         })
-        wsRef.current.send(wsreq)
+        wsRef.current?.send(wsreq)
     }
 
     function handleStop() {
         let wsreq = JSON.stringify({
             type: "stop"
         })
-        wsRef.current.send(wsreq)
+        wsRef.current?.send(wsreq)
         setLoading(false)
     }
 

@@ -20,7 +20,7 @@ export default function Home() {
           )
         }
       </div>
-      <ChatInput />
+      {/* <ChatInput /> */}
       <div className="p-2 text-xs text-zinc-400">Ai responses may contain mistakes</div>
     </>
   );
