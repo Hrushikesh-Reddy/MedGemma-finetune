@@ -1,8 +1,9 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from .dependencies import init_managers, cleanup_managers
 from contextlib import asynccontextmanager
-from .routes import ws
+from .routes import ws, sessions
 from loguru import logger
 from .config import settings
 
@@ -28,8 +29,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(ws.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+        "http://localhost:8001",
+        "http://localhost:8081",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(ws.router)
+app.include_router(
+    sessions.router,
+    prefix="/sessions", 
+)
 templates = Jinja2Templates(directory="public")
 
 @app.get("/")

@@ -63,18 +63,19 @@ class DatabaseManager:
     def get(
         self,
         model_class: type[DatabaseModel],
-        limit: int | None = None,
         filters: dict[str, any] | None = None,
+        limit: int | None = None,
         return_json: bool = False,
         order: str = "desc",
     ) -> Response:
-        
+        result=[]
         status = True
         with Session(self.engine) as session:
                 try:
-                    status = True
+                    #print(select(model_class).where(model_class.session_id == filters.get("session_id")))
                     statement = select(model_class)
                     if filters : 
+                        print("filtering")
                         conditions = [
                             getattr(model_class, col) == value 
                             for col, value in filters.items() 
@@ -90,14 +91,15 @@ class DatabaseManager:
                         #print(f"limiting by {limit}")
                     #print(order, limit)
                     items = session.exec(statement).all()
+                    #print(items)
                     #print(f"items : {items} {type(items)}\n")
                     result = [
-                        items.model_dump() if return_json else item
+                        item.model_dump() if return_json else item
                         for item in items
                     ]
                     status_message=f"{model_class.__name__} retrieved successfully"
                 except Exception as e:
-                    logger.error(f"Error getting from db : {e}")
+                    logger.error(f"Error getting from db : {e} {e.__cause__} {str(e)}")
                     status=False
                     status_message=f"Error while fetching {model_class.__name__}"
         
@@ -115,7 +117,7 @@ class DatabaseManager:
                 statement = select(model_class)
                 if filters:
                     conditions = [
-                        setattr(model_class, col) == value
+                        getattr(model_class, col) == value
                         for col, value in filters.items()
                     ]
                     statement = statement.where(and_(*conditions))
@@ -127,7 +129,7 @@ class DatabaseManager:
                     session.commit()
                     status_message = f"{model_class.__name__} deleted successfully"
                 else:
-                    status_message = f"Row not found"
+                    status_message = f"{model_class.__name__} row(s) not found"
                     logger.info(f"Rows with {filters} not found")
                     
             except exc.IntegrityError as e:

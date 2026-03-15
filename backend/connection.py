@@ -67,7 +67,9 @@ class WebSocketManager:
     
     def get_run(self, session_id: str) -> Message:
         try :
-            return self.db_manager.get(Message, 1, {"session_id": uuid.UUID(session_id)}).data[0]
+            res = self.db_manager.get(Message, limit=1, filters={"session_id": uuid.UUID(session_id)})
+            print(res)
+            return res.data[0]
         except Exception as e:
             logger.error(f"Error getting run : {e}")    
                 
@@ -94,7 +96,7 @@ class WebSocketManager:
             await self._save_message(session_id, "".join(result))
             
         except asyncio.CancelledError:
-            logger.warning(f"run interrupted by user or server cleanup : {e}")
+            logger.warning(f"run interrupted by user or server cleanup")
             await asyncio.shield(self._save_message(session_id, "".join(result)))
             raise # ?
         except Exception as e:

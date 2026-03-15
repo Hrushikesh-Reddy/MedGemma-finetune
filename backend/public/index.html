@@ -19,8 +19,28 @@
                 messages.textContent += data.content;
                 // messages.appendChild(message);
             };
-            function sendMessage() {
+            async function sendMessage() {
                 var input = document.getElementById('messageText');
+                const jstr = JSON.stringify({
+                    "user":"u1",
+                    "session_id":"01957f9c-8c9c-7d2a-9b7e-6f3d1a2c4e5f",
+                    input : {
+                        prompt: input.value,
+                        image: "path_to_img"
+                    }
+                    })
+                    console.log(jstr)
+                const req = new Request("http://localhost:8000/sessions/run",{
+                    method: "POST",
+                    body: jstr,
+                    headers:{
+                        "content-type":"Application/Json"
+                    }
+                })
+                console.log(req)
+                let res = await fetch(req)
+                res = await res.body
+                console.log(res)
                 let message = JSON.stringify({
                     type:"start",
                     Run : {

@@ -12,7 +12,6 @@ async def websocket_endpoint(
     websocket: WebSocket,
     session_id: str,
     websocket_manager:WebSocketManager = Depends(get_websocket_manager),
-    db=Depends(get_db)
 ):
     connected = await websocket_manager.connect(session_id, websocket)
     if not connected:
