@@ -3,40 +3,45 @@ import remarkGfm from 'remark-gfm';
 
 export default function MarkdownComponent({ content }: { content: string }) {
     return (
-        <div className="prose dark:prose-invert">
+        <article className="prose prose-base dark:prose-invert min-w-full text-justify pl-2">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                    h1: ({ children }) => (
-                        <h1 className="text-3xl font-bold mt-6 mb-4">{children}</h1>
-                    ),
-
-                    h2: ({ children }) => (
-                        <h2 className="text-2xl font-semibold mt-5 mb-3">{children}</h2>
-                    ),
-
                     p: ({ children }) => (
-                        <p className="leading-7 mb-2">{children}</p>
-                    ),
-
-                    li: ({ children }) => (
-                        <li className="mb-2">{children}</li>
-                    ),
-
-                    a: ({ href, children }) => (
-                        <a
-                            href={href}
-                            className="text-blue-500 underline"
-                            target="_blank"
-                        >
-                            {children}
-                        </a>
+                        <p className="text-justify">{children}</p>
                     ),
                 }}
+            /* components={{
+                h1: ({ children }) => (
+                    <h1 className="text-3xl font-bold mt-6 mb-4">{children}</h1>
+                ),
+
+                h2: ({ children }) => (
+                    <h2 className="text-2xl font-semibold mt-5 mb-3">{children}</h2>
+                ),
+
+                p: ({ children }) => (
+                    <p className="leading-7 mb-2">{children}</p>
+                ),
+
+                li: ({ children }) => (
+                    <li className="mb-2">{children}</li>
+                ),
+
+                a: ({ href, children }) => (
+                    <a
+                        href={href}
+                        className="text-blue-500 underline"
+                        target="_blank"
+                    >
+                        {children}
+                    </a>
+                ),
+            }} */
             >
                 {content}
             </ReactMarkdown>
-        </div>
+        </article>
     );
 };
 
