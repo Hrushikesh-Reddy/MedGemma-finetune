@@ -1,28 +1,15 @@
 "use client"
 import ChatInput from "../ChatInput"
-import Message from "../Message";
+import MessageComponent from "../Message";
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import { get_upload_url } from "./utils"
-
-interface Message {
-    response: string;
-    input: {
-        prompt: string;
-        image: File | string | null;
-    };
-    done: boolean | null;
-}
-
-interface Input {
-    prompt: string;
-    image: File | null
-}
+import { Message, Input } from "../../types/datamodel"
 
 export default function Home() {
 
     const params = useParams()
-    const session_id = params.session
+    const session_id = params.session?.toString()
     const user = "u1"
     const user_id = 1
     const [messages, setMessages] = useState<Array<Message>>([])
@@ -31,7 +18,6 @@ export default function Home() {
     const bottomRef = useRef<HTMLDivElement | null>(null)
 
     //console.log(params)
-
     useEffect(() => {
         const getMessages = async () => {
             let res = await fetch(`http://localhost:8000/sessions/${session_id}/messages`)
@@ -49,10 +35,24 @@ export default function Home() {
 
     useEffect(() => {
         const ws = new WebSocket(`ws://localhost:8000/runs/${session_id}`);
-        wsRef.current = ws;
+
+        ws.onopen = () => {
+            wsRef.current = ws;
+            if (typeof (session_id) === "string") {
+                let input: string | null = localStorage.getItem(session_id)
+                let prompt: Input;
+                if (typeof (input) === "string") {
+                    prompt = JSON.parse(input)
+                    console.log(prompt)
+                    handleSubmit(prompt)
+                }
+                localStorage.removeItem(session_id)
+            }
+        }
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data)
+
             if (data.type === "message") {
                 setMessages((prev) => {
                     let updated = [...prev]
@@ -68,13 +68,15 @@ export default function Home() {
             }
             else if (data.type === "stopped") {
                 setLoading(false)
-            } else if (data.type === "Error") {
+            }
+            else if (data.type === "Error") {
                 setLoading(false)
             }
         }
 
         return (() => ws.close())
     }, [])
+
 
     async function handleSubmit(input: Input) {
         setLoading(true)
@@ -90,7 +92,7 @@ export default function Home() {
             })
             //console.log("Aws upload", ureq)
         }
-
+        //console.log("Post 1", input, typeof (input), typeof (input.prompt))
         const jstr = JSON.stringify({
             "user": user,
             "session_id": session_id,
@@ -99,7 +101,7 @@ export default function Home() {
                 image: upload_data ? upload_data.Key : null
             }
         })
-        //console.log(jstr)
+        //console.log("Post -> sessions/run", jstr)
         const req = new Request("http://localhost:8000/sessions/run/", {
             method: "POST",
             body: jstr,
@@ -148,11 +150,11 @@ export default function Home() {
 
     return (
         <>
-            <div className="bg-base-200 h-full w-full overflow-auto flex flex-col sm:pl-8 md:pl-16 lg:pl-24 xl:pl-60 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-60 no-scrollbar transition-all pt-6">
+            <div className="bg-base-200 h-full w-full overflow-y-auto flex flex-col sm:pl-8 md:pl-16 lg:pl-24 xl:pl-60 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-60 no-scrollbar transition-all pt-6 max-sm:p-6">
                 {
                     messages.map((msg, i) => {
                         //console.log(i === messages.length - 1 ? msg : "")
-                        return (<Message
+                        return (<MessageComponent
                             key={i}
                             prompt={msg["input"]["prompt"]}
                             response={msg["response"]}

@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="forest">
+    <html lang="en" data-theme="forest" className="transition-transform max-sm:text-md">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

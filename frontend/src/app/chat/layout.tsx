@@ -1,11 +1,13 @@
 "use client"
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { MessageCircle, Settings, PanelLeft } from "lucide-react";
-import { SquarePen, Sun, Moon, EllipsisVertical, Ellipsis, LogOut } from "lucide-react"
-import "./chat.css"
-
+import { SquarePen, Sun, Moon, Ellipsis, LogOut, Settings, PanelLeft } from "lucide-react"
 import Link from "next/link";
+import "./chat.css"
+import SessionContext from "./context"
+import { Response, Session } from "../types/datamodel"
+
+
+
 export default function ChatLayout({
   children,
 }: {
@@ -14,31 +16,44 @@ export default function ChatLayout({
 
   const [sidebar, setSidebar] = useState<boolean>(true)
   const [isDark, setIsDark] = useState(true)
+  const [sessions, setSessions] = useState<Session[]>([])
+  const user = "u1"
 
-  let sessions = ["01957f9c-8c9c-7d2a-9b7e-6f3d1a2c4e5f", "sid2", "sid3", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4", "sid4"]
-  //let sessions = ["01957f9c-8c9c-7d2a-9b7e-6f3d1a2c4e5f", "sid2", "sid3"]
+  useEffect(() => {
+    const getSessions = async () => {
+      let res = await fetch(`http://localhost:8000/sessions/${user}`)
+      let data = await res.json()
+      data = data.data
+      data.sort((a: Session, b: Session) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+      setSessions(data)
+    }
+    getSessions()
+  }, [])
+
   return (
     <div className="flex max-h-screen" data-theme={`${isDark ? "halloween" : "wireframe"}`}>
       {/* Sidebar */}
-      <aside className={`max-w-64 p-4 flex flex-col bg-base-300 whitespace-nowrap ${sidebar ? "" : "max-w-[50px]"}`}>
+      <aside className={`max-w-66 overflow-x-hidden p-4 flex flex-col bg-base-300 whitespace-nowrap ${sidebar ? "" : "max-w-[50px]"} max-sm:hidden`}>
 
-        <button className="p-1 hover:bg-base-300 hover:rounded min-w-[28px] max-w-[28px] outline-0" onClick={() => setSidebar(!sidebar)}>
+        <button className="p-1 hover:cursor-e-resize hover:bg-base-300 hover:rounded min-w-[28px] max-w-[28px] outline-0" onClick={() => setSidebar(!sidebar)}>
           <PanelLeft size={20} className="min-w-[20px] hover:bg-base-300" />
         </button>
 
 
         <nav className="flex flex-col gap-3">
-          <div className={`flex items-center gap-2 mt-4 rounded min-w-[28px] hover:bg-base-200 ${sidebar ? "p-2" : "p-1"}`}>
+          <a href="/chat" className={`flex items-center gap-2 rounded min-w-[28px] hover:bg-base-200 p-1 mt-4`}>
             <SquarePen size={20} className="min-w-[20px]" />
             <span className={`${sidebar ? "" : "hidden"}`}>New Chat</span>
-          </div>
+          </a>
         </nav>
         <div className={`flex-1 min-h-0 overflow-y-auto mt-4 overflow-x-clip ${sidebar ? "" : "invisible"} }`}>
           <h2 className="text-lg font-bold">Chats</h2>
-          <div className="p-4 pt-0 rounded flex flex-col">
+          <div className="p-4 pt-0 pl-0 rounded flex flex-col">
             {
               sessions.map((ses, i) =>
-                (<Link href={`/chat/${ses}`} key={i} className="font-base-content p-2 block hover:rounded hover:bg-base-200" >{ses}</Link>)
+                (<Link href={`/chat/${ses.id}`} key={ses.id} className="font-base-content p-2 block hover:rounded hover:bg-base-200" >{ses.name}</Link>)
               )
             }
           </div>
@@ -75,8 +90,9 @@ export default function ChatLayout({
             }
           </button>
         </header>
-
-        {children}
+        <SessionContext.Provider value={{ setSessions }}>
+          {children}
+        </SessionContext.Provider>
       </main>
     </div >
   );/* <section>{children}</section> */

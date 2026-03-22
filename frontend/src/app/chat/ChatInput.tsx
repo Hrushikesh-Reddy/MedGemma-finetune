@@ -32,8 +32,9 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
     }
 
     async function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-        if (e.key === "Enter" && text.trim() !== "") {
 
+        if (e.key === "Enter" && text.trim() !== "") {
+            e.preventDefault()
             onSubmit({ prompt: text, image: file ? file : null })
             setText("")
             if (file) {
@@ -59,7 +60,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
     }
 
     return (
-        <Form onSubmit={(e) => handleSubmit(e)} action="" className=" rounded w-[62%] flex flex-col m-2 mb-0 bg-base-100 shadow-md">
+        <Form onSubmit={(e) => handleSubmit(e)} action="" className=" rounded w-[62%] flex flex-col m-2 mb-0 bg-base-100 shadow-md max-sm:w-[90%] max-sm:p-1">
             {fileUrl &&
                 <div className="relative h-40 w-40 m-2">
                     <img src={fileUrl} className="h-full w-full m-2 rounded-2xl"></img>
@@ -71,11 +72,13 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
 
                 {/* Add files + */}
                 <div className="dropdown dropdown-top p-0 m-0">
-                    <div tabIndex={0} role="button" className="btn border-0 bg-base-100 hover:bg-base-200"><Plus className="hover:rounded-full transition-all" /></div>
+                    <div tabIndex={0} role="button" className="border-0 bg-base-100 hover:bg-base-200">
+                        <Plus className="hover:rounded-full transition-all" />
+                    </div>
                     <ul tabIndex={-1} className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 p-2 shadow-sm">
                         <li><button onClick={e => openFileExplorer()} >
                             <input type="file" className="hidden" ref={FileInputRef} onChange={e => handleAddFiles(e)} />
-                            <Paperclip size={16} className="inline mr-2" />
+                            <Paperclip size={16} className="inline mr-2 max-sm:size-5" />
                             Upload Image
                         </button></li>
                         <li><a>Item 2</a></li>
@@ -83,7 +86,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
                 </div>
                 {/* Send/Stop messages */}
                 {!loading ?
-                    <button type="submit" className="btn border-0 bg-base-100 hover:bg-base-200" >
+                    <button type="submit" className="border-0 bg-base-100 hover:bg-base-200" >
                         <SendHorizontal className="" />
                     </button>
                     :
