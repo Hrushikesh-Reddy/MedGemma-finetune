@@ -1,20 +1,26 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form, File
 from ..dependencies import get_db
 from ..datamodel import Message, Session, Input
 from pydantic import BaseModel
 from loguru import logger
+from ..llm import generate_session_name
+import uuid
 router = APIRouter()
 
 class Request(BaseModel):
-    user: str
+    user_id: str
     session_id: str
     input: Input
     
-    
+class CreateSessionRequest(BaseModel):
+    user: str
+    prompt: str
+
 @router.post("/run")
 async def create_run(request: Request, db=Depends(get_db)):
+    print(request)
     msg = Message(
-        user=request.user,
+        user_id=request.user_id,
         session_id=request.session_id,
         input=request.input.model_dump()
     )
@@ -23,18 +29,19 @@ async def create_run(request: Request, db=Depends(get_db)):
     
     return res
     
-@router.post("/{user}")
-async def create_session(user: str, db=Depends(get_db)):
+@router.post("/create/{user_id}")
+async def create_session(user_id: str, db=Depends(get_db)):
     res = db.upsert(Session(
-        user=user,
+        user_id=user_id,
+        name="New Session" #await generate_session_name(req.prompt)
     ), return_json=True)
-    return res.data
+    return res
 
-@router.get("/{user}")
-async def list_sessions(user: str, db=Depends(get_db)):
+@router.get("/{user_id}")
+async def list_sessions(user_id: str, db=Depends(get_db)):
     res = db.get(
         Session,
-        {"user":user},
+        filters={"user_id":user_id},
         return_json=True
     )
     return res

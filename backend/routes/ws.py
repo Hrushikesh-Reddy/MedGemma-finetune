@@ -5,7 +5,7 @@ from ..dependencies import get_websocket_manager, get_db
 from fastapi import Depends, APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
 
-router = APIRouter()
+router = APIRouter() 
 
 @router.websocket("/runs/{session_id}")
 async def websocket_endpoint(
@@ -16,6 +16,7 @@ async def websocket_endpoint(
     connected = await websocket_manager.connect(session_id, websocket)
     if not connected:
         await websocket.close(code=4002, reason="Failed to establish connection")
+        logger.error("Failed to establish connection")
         return
 
     try:

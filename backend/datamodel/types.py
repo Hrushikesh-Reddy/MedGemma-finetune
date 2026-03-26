@@ -4,14 +4,14 @@ from typing import Optional, Any
 
 class Input(BaseModel):
     prompt:str
-    image:str
+    image:str | None
     
 class Run(BaseModel):
-    user:str
+    user_id:str
     input:Input
     
 class Response(BaseModel):
-    message: str
+    message: str 
     status: bool
     data: Optional[Any] = None
 

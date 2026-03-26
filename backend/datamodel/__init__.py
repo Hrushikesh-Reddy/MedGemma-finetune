@@ -1,6 +1,7 @@
 from .db import (
     Message,
-    Session
+    Session,
+    User,
 )
 
 from .types import (
@@ -15,4 +16,5 @@ __all__ = [
     "Run",
     "Response",
     "Session",
+    "User",
 ]

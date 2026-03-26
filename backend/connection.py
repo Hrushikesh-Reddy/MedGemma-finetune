@@ -54,14 +54,15 @@ class WebSocketManager:
             logger.error(f"Error sending message for session {session_id} {e} {message}")
             await self.disconnect(session_id)
     
-    async def _save_message(self, session_id:str, message:str):
+    async def _save_message(self, session_id:str, message:str, status:str):
         try:
             msg = self.get_run(session_id)
             #print("run : ", run)
             msg.response = message
-            logger.info(f"saving message : {msg}")
+            msg.status = status
+            #logger.info(f"saving message : {msg}")
             res = self.db_manager.upsert(msg)
-            logger.info(f"\n{res}\n")
+           # logger.info(f"\n{res}\n")
         except Exception as e:
             logger.error(f"Error saving message : {e}")
     
@@ -85,6 +86,7 @@ class WebSocketManager:
             stream = await generate(prompt)
             # Process and print each chunk as it arrives
             result=[]
+
             async for chunk in stream:
                 message = {
                     "type":"message",
@@ -93,14 +95,15 @@ class WebSocketManager:
                 }
                 result.append(message["content"])
                 await self._send_message(session_id, message)
-            await self._save_message(session_id, "".join(result))
+            await self._save_message(session_id, "".join(result), "COMPLETED")
             
         except asyncio.CancelledError:
             logger.warning(f"run interrupted by user or server cleanup")
-            await asyncio.shield(self._save_message(session_id, "".join(result)))
+            await asyncio.shield(self._save_message(session_id, "".join(result), "STOPPED"))
             raise # ?
         except Exception as e:
             await self._send_message(session_id, {"type" : "Error", "reason" : f"{e}"})
+            await asyncio.shield(self._save_message(session_id, "".join(result), "ERROR"))
             logger.error(f"Error streaming for session {session_id}: {e}")
         finally:
             self._tasks.pop(session_id, None)

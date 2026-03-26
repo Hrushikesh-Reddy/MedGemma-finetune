@@ -63,17 +63,23 @@ class DatabaseManager:
     def get(
         self,
         model_class: type[DatabaseModel],
+        columns: list[any] | None = None,
         filters: dict[str, any] | None = None,
         limit: int | None = None,
         return_json: bool = False,
         order: str = "desc",
+        no_order: bool | None = False
     ) -> Response:
         result=[]
         status = True
         with Session(self.engine) as session:
                 try:
                     #print(select(model_class).where(model_class.session_id == filters.get("session_id")))
-                    statement = select(model_class)
+                    statement = None
+                    if columns:
+                        statement = select(*columns)
+                    else:
+                        statement = select(model_class)
                     if filters : 
                         print("filtering")
                         conditions = [
@@ -83,17 +89,22 @@ class DatabaseManager:
                         #print(f"conditions : {conditions}")
                         statement = statement.where(and_(*conditions))
                 
-                    if hasattr(model_class, "id"):
+                    if not no_order and hasattr(model_class, "id"):
                         order_by_clause = getattr(model_class.id, order)()
                         statement = statement.order_by(order_by_clause)
                     if limit : 
                         statement = statement.limit(limit)
                         #print(f"limiting by {limit}")
                     #print(order, limit)
-                    items = session.exec(statement).all()
-                    #print(items)
-                    #print(f"items : {items} {type(items)}\n")
-                    result = [
+
+                    if(columns):
+                        items = session.exec(statement).mappings().all()
+                        print(items, type(items), type(items[0]))
+                        print(f"items : {items} {type(items)}\n")
+                        result = [dict(r) for r in items]
+                    else:
+                        items = session.exec(statement).all()
+                        result = [
                         item.model_dump() if return_json else item
                         for item in items
                     ]
