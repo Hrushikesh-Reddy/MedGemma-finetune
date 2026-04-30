@@ -5,11 +5,12 @@ from ..aws_s3 import generate_upload_url, get_files
 
 
 router = APIRouter()
-
+ 
 @router.get("/upload/")
 async def generate_url(user_id: str, filename: str):
-   res = generate_upload_url(user_id, filename)
-   return res
+    print(user_id, filename)
+    res = generate_upload_url(user_id, filename)
+    return res
 
 @router.get("/image/")
 async def get_image(Key: str):

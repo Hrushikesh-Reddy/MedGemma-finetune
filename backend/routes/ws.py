@@ -18,7 +18,7 @@ async def websocket_endpoint(
         await websocket.close(code=4002, reason="Failed to establish connection")
         logger.error("Failed to establish connection")
         return
-
+ 
     try:
         while True:
             data = await websocket.receive_json()

@@ -1,17 +1,11 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from .dependencies import init_managers, cleanup_managers
 from contextlib import asynccontextmanager
-from .routes import ws, sessions, utils, auth
+from .routes import ws, sessions, utils#, auth
 from loguru import logger
 from .config import settings
-""" from fastapi_plugin.fast_api_client import Auth0FastAPI
-
-auth0 = Auth0FastAPI(
-    domain=settings.AUTH0_DOMAIN,
-    audience=settings.AUTH0_AUDIENCE
-) """
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

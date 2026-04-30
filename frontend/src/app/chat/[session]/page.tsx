@@ -3,31 +3,34 @@ import ChatInput from "../ChatInput"
 import MessageComponent from "../Message";
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
-import { get_upload_url } from "./utils"
 import { Message, Input } from "../../types/datamodel"
+import { useRouter } from "next/navigation"
+import { useUser } from "@auth0/nextjs-auth0/client";
+
+import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
+import { createRunOptions } from '@/src/app/api/Messages/createRun'
+import { messageOptions } from '@/src/app/api/Messages/getMessages'
+import { getQueryClient } from '@/app/api/get-query-client'
 
 export default function Home() {
 
     const params = useParams()
+    const router = useRouter()
     const session_id = params.session?.toString()
-    const user = "u1"
-    const user_id = 1
+    const { user } = useUser()
+    const user_id = "0094b233-0110-407a-8219-11288be39d16"
     const [messages, setMessages] = useState<Array<Message>>([])
     const [loading, setLoading] = useState(false)
     const wsRef = useRef<WebSocket | null>(null)
     const bottomRef = useRef<HTMLDivElement | null>(null)
 
-    //console.log(params)
+    const queryClient = getQueryClient()
+    const { data } = useSuspenseQuery(messageOptions(session_id))
+    const messageMutation = useMutation(createRunOptions)
+
     useEffect(() => {
-        const getMessages = async () => {
-            let res = await fetch(`http://localhost:8000/sessions/${session_id}/messages`)
-            let data = await res.json()
-            data = data.data
-            //console.log(data)
-            setMessages(data.reverse())
-        }
-        getMessages()
-    }, [session_id])
+        setMessages([...data.data].reverse())
+    }, [data])
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -38,16 +41,6 @@ export default function Home() {
 
         ws.onopen = () => {
             wsRef.current = ws;
-            if (typeof (session_id) === "string") {
-                let input: string | null = localStorage.getItem(session_id)
-                let prompt: Input;
-                if (typeof (input) === "string") {
-                    prompt = JSON.parse(input)
-                    console.log(prompt)
-                    handleSubmit(prompt)
-                }
-                localStorage.removeItem(session_id)
-            }
         }
 
         ws.onmessage = (event) => {
@@ -60,11 +53,11 @@ export default function Home() {
                     updated[last] = {
                         ...updated[last],
                         response: updated[last].response + data.content,
-                        done: data.done
+                        status: data.status
                     }
                     return updated
                 })
-                if (data.done) setLoading(false)
+                if (data.status == "COMPLETED") setLoading(false)
             }
             else if (data.type === "stopped") {
                 setLoading(false)
@@ -74,53 +67,29 @@ export default function Home() {
             }
         }
 
-        return (() => ws.close())
+        ws.onclose = () => router.refresh()
+
+        return () => ws.close()
     }, [])
 
 
     async function handleSubmit(input: Input) {
         setLoading(true)
-        //console.log(text)
-        let upload_data = null;
-        //console.log("image present ?", input.image)
-        if (input.image) {
-            upload_data = await get_upload_url(user_id, input?.image);
-            let ureq = await fetch(upload_data.url, {
-                method: "PUT",
-                body: input.image,
-                headers: { "content-type": input.image.type }
-            })
-            //console.log("Aws upload", ureq)
-        }
-        //console.log("Post 1", input, typeof (input), typeof (input.prompt))
-        const jstr = JSON.stringify({
-            "user": user,
-            "session_id": session_id,
-            input: {
-                prompt: input.prompt,
-                image: upload_data ? upload_data.Key : null
-            }
-        })
-        //console.log("Post -> sessions/run", jstr)
-        const req = new Request("http://localhost:8000/sessions/run/", {
-            method: "POST",
-            body: jstr,
-            headers: {
-                "content-type": "Application/Json"
-            }
-        })
-        await fetch(req)
+
+        const res = await messageMutation.mutateAsync({ user_id, session_id, input })
+        console.log("TanStackQuery : Message post", res, res.data)
+
         setMessages((prev) => {
             let updated = [...prev]
             let last = {
                 input: {
                     prompt: input.prompt,
-                    image: upload_data ? upload_data.Key : null
+                    image: res.data.input.image ? res.data.input.image : null
                 },
                 response: "",
-                done: false
+                status: "STARTED"
             }
-            //console.log("adding new prompt", last)
+
             updated.push(last)
             return updated
         })
@@ -128,12 +97,12 @@ export default function Home() {
         let wsreq = JSON.stringify({
             type: "start",
             Run: {
-                user: "u1",
+                user_id: user_id,
                 input: {
                     prompt: input.prompt,
-                    image: upload_data ? upload_data.Key : null
+                    image: res.data.input.image ? res.data.input.image : null
                 }
-            },
+            }
         })
         wsRef.current?.send(wsreq)
     }
@@ -153,13 +122,12 @@ export default function Home() {
             <div className="bg-base-200 h-full w-full overflow-y-auto flex flex-col sm:pl-8 md:pl-16 lg:pl-24 xl:pl-60 sm:pr-8 md:pr-16 lg:pr-24 xl:pr-60 no-scrollbar transition-all pt-6 max-sm:p-6">
                 {
                     messages.map((msg, i) => {
-                        //console.log(i === messages.length - 1 ? msg : "")
                         return (<MessageComponent
                             key={i}
                             prompt={msg["input"]["prompt"]}
                             response={msg["response"]}
                             image={msg["input"]["image"]}
-                            done={msg["done"] == undefined ? true : msg["done"]}
+                            done={msg["status"] && (msg["status"].includes("STARTED") || msg["status"].includes("INPROGRESS")) ? false : true}
                             loading={loading}
                         />)
                     }

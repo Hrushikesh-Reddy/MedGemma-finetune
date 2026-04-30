@@ -4,9 +4,14 @@ from ..datamodel import Message, Session, Input
 from pydantic import BaseModel
 from loguru import logger
 from ..llm import generate_session_name
-import uuid
-router = APIRouter()
+from .auth import auth0
 
+""" router = APIRouter(dependencies=[
+    Depends(auth0.require_auth(scopes=["read:messages", "write:messages"]))
+]) """
+
+router = APIRouter()
+ 
 class Request(BaseModel):
     user_id: str
     session_id: str

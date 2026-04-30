@@ -1,12 +1,12 @@
 import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 
 export interface Message {
-    response: string;
     input: {
         prompt: string;
         image: File | string | null;
     };
-    done: boolean | null;
+    response: string;
+    status: "STARTED" | "COMPLETED" | "ERROR" | "STOPPED" | "INPROGRESS";
 }
 
 export interface Input {
@@ -23,12 +23,7 @@ export interface Response {
 export interface Session {
   id: string
   name: string
-  user: string
+  user_id: string
   created_at: Timestamp
   updated_at: Timestamp
-}
-
-export interface Prompt {
-     prompt: string
-     image: File | null 
 }

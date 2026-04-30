@@ -17,6 +17,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
     }
 
     async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+        if (loading) return;
         e.preventDefault()
         if (text.trim() === "") return
         onSubmit({ prompt: text, image: file ? file : null })
@@ -32,7 +33,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
     }
 
     async function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-
+        if (loading) return;
         if (e.key === "Enter" && text.trim() !== "") {
             e.preventDefault()
             onSubmit({ prompt: text, image: file ? file : null })

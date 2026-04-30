@@ -2,10 +2,8 @@ from fastapi import APIRouter, Depends, requests
 from fastapi_plugin.fast_api_client import Auth0FastAPI
 from ..config import settings
 from ..datamodel import User
-from ..utils import get_jwks, get_current_user
+from ..utils import get_current_user
 from loguru import logger
-import httpx
-from jose import jwt
 from fastapi.security import HTTPBearer
 from ..dependencies import get_db
 security = HTTPBearer()
@@ -60,5 +58,7 @@ async def private(claims: dict = Depends(auth0.require_auth()), token = Depends(
 async def private_scoped(claims: dict = Depends(auth0.require_auth(scopes="read:messages"))):
     return {
         "message": "Hello from a private endpoint! You need to be authenticated and have a scope of read:messages to see this.",
-        "user_id": claims.get("sub")
+        "user_id": claims.get("sub"),
+        "permissions": claims.get("permissions", []),
+        "custom_claim": claims.get("https://mf.user.com/additional_user_data")
     }

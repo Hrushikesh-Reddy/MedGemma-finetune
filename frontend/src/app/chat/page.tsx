@@ -1,40 +1,20 @@
 "use client"
 import ChatInput from "./ChatInput"
-import { useSession } from "./context"
-import { useRouter } from "next/navigation"
-import { Session, Prompt } from "@/src/app/types/datamodel"
+import { Input } from "@/src/app/types/datamodel"
+import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
 
 export default function Home() {
 
-  const { setSessions } = useSession()
-  const router = useRouter()
-  const username = "u1";
+  const { user, error, isLoading } = useUser();
 
-  async function handleSubmit(prompt: Prompt) {
+  async function handleSubmit(input: Input) {
+    while (isLoading) continue
     let jstr = JSON.stringify({
-      user: username,
-      prompt: prompt.prompt
+      user: user?.name,
+      prompt: input.prompt
     })
     console.log(jstr)
-    let res = await fetch(`http://localhost:8000/sessions/create`, {
-      method: "POST",
-      body: jstr,
-      headers: { "Content-Type": "application/json" }
-    })
-    let data = await res.json();
-    data = data.data
-    setSessions((sessions: Session[]) => {
-      let updates = [...sessions]
-      updates.push(data)
-      updates.sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      })
-      return updates
-    })
-    localStorage.setItem(data.id, JSON.stringify({ ...prompt }))
-    router.push(`/chat/${data.id}`)
   }
-
   return (
     <>
       <div className="text-white text-2xl h-full">Placeholder</div>

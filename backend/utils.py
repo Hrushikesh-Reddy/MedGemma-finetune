@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer
 from .config import settings
 from fastapi_plugin.fast_api_client import Auth0FastAPI
-from loguru import logger
+from loguru import logger 
 
 security = HTTPBearer()
 ALGORITHMS = ["RS256"]
