@@ -1,7 +1,7 @@
 import boto3, uuid, os, dotenv
 
 dotenv.load_dotenv()
-# Let's use Amazon S3
+
 AWS_BUCKET_NAME=os.environ.get("AWS_BUCKET_NAME")
 AWS_BUCKET_REGION=os.environ.get("AWS_BUCKET_REGION")
 AWS_ACCESS_KEY=os.environ.get("AWS_ACCESS_KEY")
