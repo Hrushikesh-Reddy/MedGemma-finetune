@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+transformers
+peft
+numpy
+pillow
+requests
+huggingface
+boto3
+dotenv
