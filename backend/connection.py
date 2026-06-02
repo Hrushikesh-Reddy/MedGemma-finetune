@@ -83,10 +83,10 @@ class WebSocketManager:
             raise ValueError("No active connection for session {session_id}") 
         
         try:
-            #stream = await generate(prompt)
-            res = await generate(prompt)
+            stream = await generate(prompt)
+            #res = await generate(prompt)
             # Process and print each chunk as it arrives
-            """ result=[]
+            result=[]
 
             async for chunk in stream:
                 message = {
@@ -95,18 +95,8 @@ class WebSocketManager:
                     "content" : chunk['message']['content'],
                 }
                 result.append(message["content"])
-                await self._send_message(session_id, message) """
-    
-            #await self._save_message(session_id, "".join(result), "COMPLETED")
-            
-            message = {
-                    "type":"message",
-                    "status": "COMPLETED",
-                    "content" : res.get("content"),
-                }
-            print(message)
-            await self._send_message(session_id, message)
-            await self._save_message(session_id, res.get("content"), "COMPLETED")
+                await self._send_message(session_id, message)
+            await self._save_message(session_id, "".join(result), "COMPLETED")
             
         except asyncio.CancelledError:
             logger.warning(f"run interrupted by user or server cleanup")

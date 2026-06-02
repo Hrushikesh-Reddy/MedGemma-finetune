@@ -1,30 +1,27 @@
 "use client"
 import ChatInput from "../ChatInput"
 import MessageComponent from "../Message";
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { useParams } from "next/navigation"
-import { Message, Input } from "../../types/datamodel"
+import { Message, Input, User } from "../../types/datamodel"
 import { useRouter } from "next/navigation"
-import { useUser } from "@auth0/nextjs-auth0/client";
-
 import { useSuspenseQuery, useMutation } from '@tanstack/react-query'
 import { createRunOptions } from '@/src/app/api/Messages/createRun'
 import { messageOptions } from '@/src/app/api/Messages/getMessages'
-import { getQueryClient } from '@/app/api/get-query-client'
+import { UserContext } from "../UserContext"
+
 
 export default function Home() {
 
     const params = useParams()
     const router = useRouter()
     const session_id = params.session?.toString()
-    const { user } = useUser()
-    const user_id = "0094b233-0110-407a-8219-11288be39d16"
+    const user_data: User = useContext(UserContext)!
+    const user_id = user_data.id
     const [messages, setMessages] = useState<Array<Message>>([])
     const [loading, setLoading] = useState(false)
     const wsRef = useRef<WebSocket | null>(null)
     const bottomRef = useRef<HTMLDivElement | null>(null)
-
-    const queryClient = getQueryClient()
     const { data } = useSuspenseQuery(messageOptions(session_id))
     const messageMutation = useMutation(createRunOptions)
 
@@ -127,6 +124,7 @@ export default function Home() {
                             prompt={msg["input"]["prompt"]}
                             response={msg["response"]}
                             image={msg["input"]["image"]}
+                            status={msg["status"]}
                             done={msg["status"] && (msg["status"].includes("STARTED") || msg["status"].includes("INPROGRESS")) ? false : true}
                             loading={loading}
                         />)
@@ -136,7 +134,7 @@ export default function Home() {
                 <div ref={bottomRef}></div>
             </div>
             <ChatInput onSubmit={handleSubmit} onStop={handleStop} loading={loading} />
-            <div className="p-2 text-xs">Ai responses may contain mistakes</div>
+            {/* <div className="p-2 text-xs">Ai responses may contain mistakes</div> */}
         </>
     );
 }

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from .dependencies import init_managers, cleanup_managers
 from contextlib import asynccontextmanager
-from .routes import ws, sessions, utils#, auth
+from .routes import ws, sessions, utils, user#, auth
 from loguru import logger
 from .config import settings
 
@@ -46,6 +46,10 @@ app.add_middleware(
 #app.include_router(auth.router)
 app.include_router(ws.router)
 app.include_router(utils.router)
+app.include_router(
+    user.router,
+    prefix="/users",
+)
 app.include_router(
     sessions.router,
     prefix="/sessions", 

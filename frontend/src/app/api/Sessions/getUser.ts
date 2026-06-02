@@ -1,12 +1,11 @@
 import { queryOptions } from '@tanstack/react-query'
 //import { getAccessToken } from "@auth0/nextjs-auth0/client";
 
-export const sessionOptions = (user_id: string|null) => queryOptions({
-  queryKey: ['session', user_id],
+export const userOptions = (auth0_sub: string|null|undefined, ready:boolean) => queryOptions({
+  queryKey: ['user', auth0_sub],
   queryFn: async () => {
     //const token = await getAccessToken();
-    if(!user_id) return {"status":"failed"}
-    const response = await fetch(`http://localhost:8000/sessions/${user_id}`/* ,
+    const response = await fetch(`http://localhost:8000/users/${auth0_sub}`/* ,
       {
         headers:{
         "Authorization" : `Bearer ${token}`

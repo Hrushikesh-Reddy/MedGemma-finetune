@@ -6,7 +6,16 @@ export interface Message {
         image: File | string | null;
     };
     response: string;
-    status: "STARTED" | "COMPLETED" | "ERROR" | "STOPPED" | "INPROGRESS";
+    status: string//"STARTED" | "COMPLETED" | "ERROR" | "STOPPED" | "INPROGRESS";
+}
+
+export interface User {
+    id: string
+    auth0_id: string
+    name:string
+    email:string
+    password:string
+    created_at: Timestamp | null
 }
 
 export interface Input {

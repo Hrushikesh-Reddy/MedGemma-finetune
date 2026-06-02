@@ -1,8 +1,8 @@
-import { Copy, Check, Ellipsis } from "lucide-react"
+import { Copy, Check, Ellipsis, TriangleAlert } from "lucide-react"
 import RenderMarkdown from "../../Components/RenderMarkdown"
 import { useState } from "react"
 
-export default function Message({ prompt, response, image, done, loading }: { [key: string]: any }) {
+export default function Message({ prompt, response, status, image, done, loading }: { [key: string]: any }) {
     //console.log("Message Prompt -> ", prompt)
     const [copied, setCopied] = useState(false)
 
@@ -18,7 +18,7 @@ export default function Message({ prompt, response, image, done, loading }: { [k
                 <img src={`http://localhost:8000/image/?Key=${encodeURIComponent(image)}`} alt="" className="self-end m-2 rounded-2xl" height={100} width={200} />}
             <div className="p-3 mb-6  rounded-3xl max-w-[80%] self-end bg-base-100 font-base-content">{prompt}</div>
             <div className="min-w-full self-start">
-                {(response) ? < RenderMarkdown content={response} /> : <span className="p-2 ml-1 bg-base-content loading loading-dots loading-sm"></span>}
+                {(status === "COMPLETED" || status == "INPROGRESS" || status == "STOPPED") ? < RenderMarkdown content={response} /> : (status === "ERROR") ? <span><TriangleAlert className="text-red-500" />Error</span> : <span className="p-2 ml-1 bg-base-content loading loading-dots loading-sm"></span>}
             </div>
             {done &&
                 <div className=" mt-0 pt-0 flex flex-row gap-1">

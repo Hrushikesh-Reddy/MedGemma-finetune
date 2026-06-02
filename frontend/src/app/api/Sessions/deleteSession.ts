@@ -1,13 +1,13 @@
 import { mutationOptions, QueryClient } from '@tanstack/react-query'
 //import { getAccessToken } from "@auth0/nextjs-auth0/client";
 
-export const mutateSessionOptions = (user_id: string|null, queryClient:QueryClient) => mutationOptions({
-  mutationKey: ['create_session'],
+export const deleteSessionOptions = (session_id: string|null, queryClient:QueryClient) => mutationOptions({
+  mutationKey: ['session'],
   mutationFn: async () => {
     //const token = await getAccessToken();
-    if(!user_id) return {"status":"failed"}
-    const response = await fetch(`http://localhost:8000/sessions/create/${user_id}`,{
-        method:"POST"/* ,
+    console.log("Sending delete query for session : ", session_id)
+    const response = await fetch(`http://localhost:8000/sessions/delete/${session_id}`,{
+        method:"DELETE"/* ,
         headers:{
         "Authorization" : `Bearer ${token}`
       } */

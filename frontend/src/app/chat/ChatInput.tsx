@@ -61,7 +61,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
     }
 
     return (
-        <Form onSubmit={(e) => handleSubmit(e)} action="" className=" rounded w-[62%] flex flex-col m-2 mb-0 bg-base-100 shadow-md max-sm:w-[90%] max-sm:p-1">
+        <Form onSubmit={(e) => handleSubmit(e)} action="" className="mb-4 rounded w-[62%] flex flex-col m-2 bg-base-100 shadow-md max-sm:w-[90%] max-sm:p-1">
             {fileUrl &&
                 <div className="relative h-40 w-40 m-2">
                     <img src={fileUrl} className="h-full w-full m-2 rounded-2xl"></img>
@@ -82,7 +82,7 @@ export default function ChatInput({ onSubmit, onStop, loading }: { onSubmit: Fun
                             <Paperclip size={16} className="inline mr-2 max-sm:size-5" />
                             Upload Image
                         </button></li>
-                        <li><a>Item 2</a></li>
+                        {/* <li><a>Item 2</a></li> */}
                     </ul>
                 </div>
                 {/* Send/Stop messages */}

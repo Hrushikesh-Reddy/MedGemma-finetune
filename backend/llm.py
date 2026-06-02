@@ -1,4 +1,4 @@
-import base64
+import base64, asyncio
 from .aws_s3 import get_files
 from ollama import AsyncClient
 import requests
@@ -10,28 +10,29 @@ async def generate(input):
        # "role": "user", 
        # "content": f"{input.get("prompt")}",               
    # }]
-    message = {
-        "text":input.get("prompt")
-    }
-    if input["image"]:
-        #res = get_files(input["image"])
-        #image_bytes = res["Body"].read()
-        #image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-        message["image"] = input["image"]
+    message = [{
+        "role":"user",
+        "content":input.get("prompt")
+    }]
+    #if input["image"]:
+     #   res = get_files(input["image"])
+      #  image_bytes = res["Body"].read()
+       # image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        #message["image"] = input["image"]
         
-    res = requests.post("https://x8l2yr7uvafy9m-7777.proxy.runpod.net/proxy/8000", json=message)
-    print(res.json())
-    return res.json()
-        #return await res.json
-        
-"""     response = await client.chat(
-        model="glm-5:cloud",
+    response = await client.chat(
+        model="gemma4:31b-cloud",
+        #model="glm-5:cloud",
         #model='hf.co/unsloth/medgemma-4b-it-GGUF:UD-Q5_K_XL', 
         #model="hf.co/Hrushikesh-0000/medgemma-4b-it-MRI6k-merged-GGUF:Q4_K_M",
-        messages=messages, 
+        messages=message, 
         stream=True)
     #print(type(response), response)
-    return response  """
+    return response 
+    #async for chunk in response:
+        #print(chunk)
+     
+#res = asyncio.run(generate({"prompt":"Hello, what is 2x2 ?"}))
 
 async def generate_session_name(prompt: str):
     messages = [

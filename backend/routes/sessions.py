@@ -42,6 +42,16 @@ async def create_session(user_id: str, db=Depends(get_db)):
     ), return_json=True)
     return res
 
+@router.delete("/delete/{session_id}")
+async def create_session(session_id: str, db=Depends(get_db)):
+#    print("Delete request for session_id", session_id)
+#    return {"status":"true"}
+    res = db.delete(
+        Session,
+        filters={"id":session_id}
+    )
+    return res
+
 @router.get("/{user_id}")
 async def list_sessions(user_id: str, db=Depends(get_db)):
     res = db.get(
